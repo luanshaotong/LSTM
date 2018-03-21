@@ -88,7 +88,7 @@ namespace LSTM {
 
 		//operator*, *=
 		Matrix& operator*=(DataType rhs) {
-			std::for_each(m_data.begin(), m_data.end(), [&](auto& x) {x *= rhs; });
+			std::for_each(m_data.begin(), m_data.end(), [&](Vector<Row, DataType>& x) {x *= rhs; });
 			return *this;
 		}
 		Matrix operator*(DataType rhs) const {
@@ -118,7 +118,7 @@ namespace LSTM {
 
 		//operator/, /=
 		Matrix& operator/=(DataType rhs) {
-			std::for_each(m_data.begin(), m_data.end(), [&](auto& x) {x /= rhs; });
+			std::for_each(m_data.begin(), m_data.end(), [&](Vector<Row, DataType>& x) {x /= rhs; });
 			return *this;
 		}
 		Matrix operator/(DataType rhs) const {
@@ -141,7 +141,7 @@ namespace LSTM {
 			return m_data.at(column);
 		}
 		Matrix& fill(DataType value) {
-			std::for_each(m_data.begin(), m_data.end(), [&](auto& x) {x.fill(value); });
+			std::for_each(m_data.begin(), m_data.end(), [&](Vector<Row, DataType>& x) {x.fill(value); });
 			return *this;
 		}
 		template <typename Functor>
