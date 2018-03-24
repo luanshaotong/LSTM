@@ -37,7 +37,7 @@ namespace LSTM {
 		}
 	};
 
-	template <std::size_t Input, std::size_t Output, std::size_t MaxMemory = 0, 
+	template <std::size_t Input, std::size_t Hidden, std::size_t Output, std::size_t MaxMemory = 0, 
 		typename DataType = float,
 		typename ActivationFunc = tanh<DataType>,
 		typename ActivationFuncGate = sigmoid<DataType>,
@@ -47,37 +47,43 @@ namespace LSTM {
 	class Node {
 		typedef struct {
 			Vector<Input, DataType> x;
-			Vector<Output, DataType> z, i, f, c, o, y;
+			Vector<Hidden, DataType> z, i, f, c, o, y;
+			Vector<Output, DataType> h;
 		}memory_t;
 		typedef struct {
 			Vector<Input, DataType> del_x;
-			Vector<Output, DataType> del_z, del_i, del_f, del_c, del_o, del_y;
+			Vector<Hidden, DataType> del_z, del_i, del_f, del_c, del_o, del_y;
+			Vector<Output, DataType> del_h;
 		}memory_back_t;
 
 		std::deque<memory_t>	m_memory;
 
-		Matrix<Output, Input, DataType>
+		Matrix<Hidden, Input, DataType>
 			m_weight_input,
 			m_weight_inputGate,
 			m_weight_forgetGate,
 			m_weight_outputGate;
 
-		Matrix<Output, Output, DataType>
+		Matrix<Hidden, Hidden, DataType>
 			m_recWeight_input,
 			m_recWeight_inputGate,
 			m_recWeight_forgetGate,
 			m_recWeight_outputGate;
+			
+		Matrix<Output, Hidden, DataType>
+			m_weight_output;
 
-		Vector<Output, DataType>
+		Vector<Hidden, DataType>
 			m_weight_peep_inputGate,
 			m_weight_peep_forgetGate,
 			m_weight_peep_outputGate;
 
-		Vector<Output, DataType>
+		Vector<Hidden, DataType>
 			m_bias_input,
 			m_bias_inputGate,
 			m_bias_forgetGate,
 			m_bias_outputGate;
+			
 
 		Vector<Input, DataType> backprop(const memory_back_t& mem_t_1, std::size_t index) {
 
@@ -88,6 +94,8 @@ namespace LSTM {
 			auto data_t = m_memory.at(index);
 
 			memory_back_t next_mem;
+			
+			//next_mem.del_h = HadamardProduct(mem_t_l.del_h
 
 			auto del_y = mem_t_1.del_y
 				+ Transpose(m_recWeight_input) * mem_t_1.del_z
@@ -169,18 +177,25 @@ namespace LSTM {
 
 			mem.y = HadamardProduct(mem.o.transform(ActivationFuncGate()), 
 				mem.c.transform(ActivationFunc()));
+				
+			mem.h = (m_weight_output * mem.y).transform(ActivationFuncGate());
 
 			m_memory.push_back(mem);
 			while (MaxMemory > 0 && m_memory.size() > MaxMemory) {
 				m_memory.pop_front();
 			}
 
-			return m_memory.back().y;
+			return m_memory.back().h;
+		}
+		
+		DataType train_epoch( const vector<Vector<Input, Datatype> >& data_set ) {
+		    for (auto data : data_set ) 
+		        Forward(data);
 		}
 
 		Vector<Input, DataType> Backward(const Vector<Output, DataType>& del) {
 			memory_back_t mem_t_1;
-			mem_t_1.del_y = del;
+			mem_t_1.del_h = del;
 			return backprop(mem_t_1, m_memory.size() - 1);
 		}
 	};

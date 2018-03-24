@@ -9,7 +9,7 @@ const float data[][3] = {
 };
 
 int main() {
-	LSTM::Node<2,1> n1;
+	LSTM::Node<2,6,1> n1;
 
 	float err_sum = 0;
 	do {
